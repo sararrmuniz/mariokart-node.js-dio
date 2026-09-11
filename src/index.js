@@ -1,18 +1,44 @@
-const player1 = {
-  NOME: "Mario",
-  VELOCIDADE: 4,
-  MANOBRABILIDADE: 3,
-  PODER: 3,
-  PONTOS: 0,
-};
+const readline = require("node:readline/promises");
+const { stdin: input, stdout: output } = require("node:process");
 
-const player2 = {
-  NOME: "Luigi",
-  VELOCIDADE: 3,
-  MANOBRABILIDADE: 4,
-  PODER: 4,
-  PONTOS: 0,
-};
+const characters = [
+  {
+    NOME: "Mario",
+    VELOCIDADE: 4,
+    MANOBRABILIDADE: 3,
+    PODER: 3,
+  },
+  {
+    NOME: "Peach",
+    VELOCIDADE: 3,
+    MANOBRABILIDADE: 4,
+    PODER: 2,
+  },
+  {
+    NOME: "Yoshi",
+    VELOCIDADE: 2,
+    MANOBRABILIDADE: 4,
+    PODER: 3,
+  },
+  {
+    NOME: "Bowser",
+    VELOCIDADE: 5,
+    MANOBRABILIDADE: 2,
+    PODER: 5,
+  },
+  {
+    NOME: "Luigi",
+    VELOCIDADE: 3,
+    MANOBRABILIDADE: 4,
+    PODER: 4,
+  },
+  {
+    NOME: "Donkey Kong",
+    VELOCIDADE: 2,
+    MANOBRABILIDADE: 2,
+    PODER: 5,
+  },
+];
 
 async function rollDice() {
   return Math.floor(Math.random() * 6) + 1;
@@ -158,17 +184,60 @@ async function declareWinner(character1, character2) {
   console.log(`${character2.NOME}: ${character2.PONTOS} ponto(s)`);
 
   if (character1.PONTOS > character2.PONTOS)
-    console.log(`\n${character1.NOME} venceu a corrida! Parabéns! 🏆`);
+    console.log(`\n${character1.NOME} venceu a corrida! Parabéns! 🏆🎉`);
   else if (character2.PONTOS > character1.PONTOS)
-    console.log(`\n${character2.NOME} venceu a corrida! Parabéns! 🏆`);
+    console.log(`\n${character2.NOME} venceu a corrida! Parabéns! 🏆🎉`);
   else console.log("A corrida terminou em empate 🤝");
 }
 
-(async function main() {
-  console.log(
-    `🏁🚨 Corrida entre ${player1.NOME} e ${player2.NOME} começando...\n`
-  );
+async function choosePlayer(reader, playerNumber, unavailablePlayer) {
+  while (true) {
+    console.log(`\n🙍 Escolha o jogador ${playerNumber}:`);
 
-  await playRaceEngine(player1, player2);
-  await declareWinner(player1, player2);
+    characters.forEach((character, index) => {
+      console.log(
+        `${index + 1} - ${character.NOME} `
+      );
+    });
+
+    const answer = await reader.question("Digite o número do personagem: ");
+    const selectedIndex = Number(answer) - 1;
+    const selectedCharacter = characters[selectedIndex];
+
+    if (!selectedCharacter) {
+      console.log("Opção inválida. Escolha um número da lista.");
+      continue;
+    }
+
+    if (selectedCharacter.NOME === unavailablePlayer) {
+      console.log("Esse personagem já foi escolhido. Escolha outro.");
+      continue;
+    }
+
+    return {
+      ...selectedCharacter,
+      PONTOS: 0,
+    };
+  }
+}
+
+(async function main() {
+  const reader = readline.createInterface({
+    input,
+    output,
+  });
+
+  try {
+    const player1 = await choosePlayer(reader, 1);
+    const player2 = await choosePlayer(reader, 2, player1.NOME);
+
+    console.log(
+      `\n🏁🚨 Corrida entre ${player1.NOME} e ${player2.NOME} começando...\n`
+    );
+
+    await playRaceEngine(player1, player2);
+    await declareWinner(player1, player2);
+  } finally {
+    reader.close();
+  }
 })();
